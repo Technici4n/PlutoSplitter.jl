@@ -1,0 +1,11 @@
+.*.swp
+.*.swo
+*~
+
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+Manifest.toml
+LocalPreferences.toml
+.vscode
+.CondaPkg

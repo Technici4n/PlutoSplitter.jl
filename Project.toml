@@ -1,0 +1,19 @@
+name = "PlutoSplitter"
+uuid = "26593b87-58e3-4a81-8553-1b48117f317a"
+authors = ["Bruno Ploumhans <13494793+Technici4n@users.noreply.github.com>"]
+version = "0.1.0"
+
+[deps]
+Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+Pluto = "0.19.47"
+Test = "1.10.0"
+TestItemRunner = "1"
+
+[extras]
+TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
+
+[targets]
+test = ["TestItemRunner"]
