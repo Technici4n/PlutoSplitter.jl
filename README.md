@@ -1,6 +1,6 @@
 # PlutoSplitter.jl
 A simple Julia package to split Pluto notebooks that contain both a statement and a solution,
-so that a statement and a solution notebook can be generated from the same solution.
+so that a statement and a solution notebook can be generated from the same source.
 
 With this package, you can write a notebook that contains two cells, for example:
 ```jl
