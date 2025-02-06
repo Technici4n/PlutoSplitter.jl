@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
-  build:
+  test:
     name: Julia ${{ matrix.description }}
     # Only run the pull-request build if the pull-request was opened from another repository,
     # since we already run this workflow for the branch the pull request was made from.
