@@ -1,0 +1,39 @@
+name: CI
+on:
+  push:
+    # Only on branches, not tags/releases
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  build:
+    name: Julia ${{ matrix.description }}
+    # Only run the pull-request build if the pull-request was opened from another repository,
+    # since we already run this workflow for the branch the pull request was made from.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {version: '1.10', description: 'stable 1.10' }
+          - {version: '1.11', description: 'stable 1.11' }
+          - {version: 'pre',  description: 'pre-release'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: x64
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
