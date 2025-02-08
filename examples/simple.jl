@@ -9,19 +9,17 @@ using InteractiveUtils
 f(10)
   ╠═╡ =#
 
+# ╔═╡ d9e9f737-6c87-4935-8252-8d576c195ced
+#=╠═╡
+# split: statement
+f(x) = nothing
+  ╠═╡ =#
+
 # ╔═╡ 02f2e7c5-2f0d-4fee-a7f3-27b088411aa6
 # ╠═╡ disabled = true
 #=╠═╡
-#= begin solution =#
+# split: solution
 f(x) = x + 42
-#= end solution =#
-  ╠═╡ =#
-
-# ╔═╡ d9e9f737-6c87-4935-8252-8d576c195ced
-#=╠═╡
-#= begin statement =#
-f(x) = nothing
-#= end statement =#
   ╠═╡ =#
 
 # ╔═╡ Cell order:
