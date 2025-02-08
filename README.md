@@ -4,14 +4,14 @@ so that a statement and a solution notebook can be generated from the same sourc
 
 With this package, you can write a notebook that contains two cells, for example:
 ```jl
-### split: statement
+# split: statement
 # Fill in your code here, by replacing nothing
 # with a function that adds 42 to x
 f(x) = nothing
 ```
 and
 ```jl
-### split: solution
+# split: solution
 f(x) = x + 42
 ```
 (You will have to disable one of them to fit both in the notebook.)
@@ -31,7 +31,7 @@ split_notebook("path/to/your_notebook.jl", "solution")
 ```
 
 ## Format details
-Cells must contain `### split: XXX` in the first line, where `XXX` can be:
+Cells must contain `# split: XXX` in the first line, where `XXX` can be:
 - `statement`
 - `solution`
 - `statement,folded`

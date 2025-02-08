@@ -3,8 +3,8 @@ module PlutoSplitter
 using Logging
 import Pluto
 
-SPLIT_REGEX_MULTILINE = r"^###\s*split:\s*(.*)$"m
-SPLIT_REGEX = r"^###\s*split:\s*(.*)\n"
+SPLIT_REGEX_MULTILINE = r"^#\s*split:\s*(.*)$"m
+SPLIT_REGEX = r"^#\s*split:\s*(.*)\n"
 
 struct SplitTag
     kind::String
