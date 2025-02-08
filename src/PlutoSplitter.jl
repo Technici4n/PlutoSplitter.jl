@@ -46,6 +46,12 @@ function check_fold(tag::SplitTag, cell)
     end
 end
 
+function check_enabled(should_be_enabled, cell)
+    if Pluto.is_disabled(cell) == should_be_enabled
+        error("Cell $(cell.code) should be $(should_be_enabled ? "enabled" : "disabled").")
+    end
+end
+
 function delete_cell_at(notebook, i)
     id = notebook.cell_order[i]
     deleteat!(notebook.cell_order, i)
@@ -69,19 +75,28 @@ function split_notebook(notebookfile, type::String)
 
     nb = Pluto.load_notebook(notebookfile)
     was_statement = false
+    was_enabled = missing
     for (i, cell) in enumerate(nb.cells)
         tag = parse_split_tag(cell.code)
         if isnothing(tag)
             if was_statement
                 error("Expected statement or solution cell to follow statement cell $(cell.code).")
             else
+                was_enabled = missing
                 continue
             end
         end
         check_fold(tag, cell)
-        was_statement = tag.kind == "statement"
-        push!(was_statement ? statements : solutions, i)
-        # TODO: check that exactly one set of cells is disabled?
+
+        is_statement = tag.kind == "statement"
+        if ismissing(was_enabled)
+            was_enabled = !Pluto.is_disabled(cell)
+        elseif is_statement != was_statement
+            was_enabled = !was_enabled
+        end
+        check_enabled(was_enabled, cell)
+        push!(is_statement ? statements : solutions, i)
+        was_statement = is_statement
     end
     if was_statement
         error("Last cell was a statement cell, expected a solution cell afterwards.")
