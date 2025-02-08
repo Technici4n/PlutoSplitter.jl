@@ -1,42 +1,49 @@
 module PlutoSplitter
 
+using Logging
 import Pluto
 
-function begin_occursin(code::String, kind::String)
-    code_stripped = strip(code)
-    if !occursin(Regex("#=\\s*begin\\s*$(kind)\\s*=#"), code_stripped)
-        return false
-    end
-    if !occursin(Regex("^#=\\s*begin\\s*$(kind)\\s*=#"), code_stripped)
-        error("Cell with contents $(code) contains a begin $kind tag, but not at the beginning of the cell!")
-    end
-    return true
-end
-function end_occursin(code::String, kind::String)
-    code_stripped = strip(code)
-    if !occursin(Regex("#=\\s*end\\s*$(kind)\\s*=#"), code_stripped)
-        return false
-    end
-    if !occursin(Regex("#=\\s*end\\s*$(kind)\\s*=#\$"), code_stripped)
-        error("Cell with contents $(code) contains an end $kind tag, but not at the end of the cell!")
-    end
-    return true
+SPLIT_REGEX_MULTILINE = r"^###\s*split:\s*(.*)$"m
+SPLIT_REGEX = r"^###\s*split:\s*(.*)\n"
+
+struct SplitTag
+    kind::String
+    folded::Bool
 end
 
-function strip_tags(code::String, kind::String)
-    code_stripped = strip(code)
-    code_stripped = replace(code_stripped, Regex("#=\\s*begin\\s*$(kind)\\s*=#") => "")
-    code_stripped = replace(code_stripped, Regex("#=\\s*end\\s*$(kind)\\s*=#") => "")
-    return strip(code_stripped)
+function parse_split_tag(code::String)
+    m = match(SPLIT_REGEX, code)
+    if isnothing(m)
+        if occursin(SPLIT_REGEX_MULTILINE, code)
+            error("split: tag should be on the first line of cell $code.")
+        end
+        return nothing
+    end
+    tag = m.captures[1]
+    if tag == "statement"
+        SplitTag("statement", false)
+    elseif tag == "solution"
+        SplitTag("solution", false)
+    elseif tag == "statement,folded"
+        SplitTag("statement", true)
+    elseif tag == "solution,folded"
+        SplitTag("solution", true)
+    else
+        error("Unknown split: tag: $tag in cell $code.")
+    end
 end
 
-function is_splittable(code::String, kind::String)
-    is_begin = begin_occursin(code, kind)
-    is_end = end_occursin(code, kind)
-    if is_begin == is_end
-        return is_begin
+function strip_tag(code::String)
+    replace(code, SPLIT_REGEX => "")
+end
+
+function check_fold(tag::SplitTag, cell)
+    if tag.folded && !cell.code_folded
+        error("Either cell $(cell.code) should be folded, or `,folded` should be removed from the split tag.")
     end
-    error("Cell with contents $(code) contains only a begin $kind or end $kind tag.")
+    if !tag.folded && cell.code_folded
+        error("Either cell $(cell.code) should be unfolded, or `,folded` should be added to the split tag.")
+    end
 end
 
 function delete_cell_at(notebook, i)
@@ -62,50 +69,35 @@ function split_notebook(notebookfile, type::String)
 
     nb = Pluto.load_notebook(notebookfile)
     was_statement = false
-    for i in 1:length(nb.cells)
-        if was_statement
-            if is_splittable(nb.cells[i].code, "solution")
-                if nb.cells[i].code_folded
-                    error("Solution cell $(nb.cells[i].code) is folded, but it should not be.")
-                end
-                push!(solutions, i)
-
-                statement_enabled = !nb.cells[i-1].metadata["disabled"]
-                solution_enabled = !nb.cells[i].metadata["disabled"]
-                if statement_enabled == solution_enabled
-                    error("Statement cell $(nb.cells[i-1].code) and solution cell $(nb.cells[i].code)"
-                        * " have the same enabled status. Exactly one should be enabled.")
-                end
+    for (i, cell) in enumerate(nb.cells)
+        tag = parse_split_tag(cell.code)
+        if isnothing(tag)
+            if was_statement
+                error("Expected statement or solution cell to follow statement cell $(cell.code).")
             else
-                error("Expected statement cell $(nb.cells[i-1].code) to be"
-                    * " immediately followed by a solution cell,"
-                    * " but it was followed by $(nb.cells[i].code)")
+                continue
             end
-            was_statement = false
-        elseif is_splittable(nb.cells[i].code, "statement")
-            if nb.cells[i].code_folded
-                error("Statement cell $(nb.cells[i].code) is folded, but it should not be.")
-            end
-            push!(statements, i)
-            was_statement = true
-        elseif is_splittable(nb.cells[i].code, "solution")
-            error("Expected solution cell $(nb.cells[i].code) to be"
-                * " immediately preceded by a statement cell,"
-                * " but it was preceded by $(nb.cells[i-1].code)")
         end
+        check_fold(tag, cell)
+        was_statement = tag.kind == "statement"
+        push!(was_statement ? statements : solutions, i)
+        # TODO: check that exactly one set of cells is disabled?
     end
     if was_statement
         error("Last cell was a statement cell, expected a solution cell afterwards.")
     end
 
-    type == "check" && return
+    if type == "check"
+        @info "Notebook $(notebookfile) is a valid splittable notebooks. Statements: $(length(statements)). Solutions: $(length(solutions))."
+        return
+    end
 
     to_remove = type == "statement" ? solutions : statements
     to_enable = type == "statement" ? statements : solutions
 
     for i in to_enable
         Pluto.set_disabled(nb.cells[i], false)
-        nb.cells[i].code = strip_tags(nb.cells[i].code, type)
+        nb.cells[i].code = strip_tag(nb.cells[i].code)
     end
 
     for i in reverse(to_remove)
@@ -113,7 +105,10 @@ function split_notebook(notebookfile, type::String)
     end
 
     basename, ext = splitext(notebookfile)
-    Pluto.save_notebook(nb, "$(basename)_$type$ext")
+    splitnotebookfile = "$(basename)_$type$ext"
+    Pluto.save_notebook(nb, splitnotebookfile)
+
+    @info "Successfully split notebook to $(splitnotebookfile)."
 end
 
 end # module PlutoSplitter

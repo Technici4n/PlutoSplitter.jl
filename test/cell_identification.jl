@@ -1,19 +1,17 @@
-@testitem "Test begin finding" begin
-    import PlutoSplitter
+@testitem "Test split finding" begin
+    import PlutoSplitter: parse_split_tag, SplitTag
 
-    @test PlutoSplitter.begin_occursin("#= begin statement =# f(10)", "statement") == true
-    @test PlutoSplitter.begin_occursin("f(10)", "statement") == false
-    # Begin should be in the beginning, ignoring whitespace
-    @test PlutoSplitter.begin_occursin("   #= begin statement =# f(10)", "statement") == true
-    @test_throws "not at the beginning of the cell" PlutoSplitter.begin_occursin("f(10) #= begin statement =#", "statement")
-end
-
-@testitem "Test end finding" begin
-    import PlutoSplitter
-
-    @test PlutoSplitter.end_occursin("f(10) #= end statement =#", "statement") == true
-    @test PlutoSplitter.end_occursin("f(10)", "statement") == false
-    # End should be in the end, ignoring whitespace
-    @test PlutoSplitter.end_occursin("f(10)   #= end statement =#   ", "statement") == true
-    @test_throws "not at the end of the cell" PlutoSplitter.end_occursin("#= end statement =# f(10)", "statement")
+    # Test statement tag with various spacing
+    @test parse_split_tag("### split: statement\n") == SplitTag("statement", false)
+    @test parse_split_tag("###split:statement\n") == SplitTag("statement", false)
+    # Test other tag types
+    @test parse_split_tag("### split: solution\n") == SplitTag("solution", false)
+    @test parse_split_tag("### split: statement,folded\n") == SplitTag("statement", true)
+    @test parse_split_tag("### split: solution,folded\n") == SplitTag("solution", true)
+    # Test common errors
+    @test_throws "Unknown split: tag: unknown" parse_split_tag("### split: unknown\n")
+    @test_throws "should be on the first line" parse_split_tag("f(10)\n### split: statement")
+    @test_throws "should be on the first line" parse_split_tag("### split: statement")
+    # trailing whitespace is currently not allowed
+    @test_throws "Unknown split: tag: statement   " parse_split_tag("###   split: statement   \n")
 end
