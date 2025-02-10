@@ -67,7 +67,7 @@ Split a notebook file.
 - type: Type of splitting to perform.
         Can be "check" to only perform some sanity checks, "statement" or "solution".
 """
-function split_notebook(notebookfile, type::String)
+function split_notebook(notebookfile, type::String; strict_errors=true)
     @assert type ∈ ["check", "statement", "solution"]
 
     statements = Int[]
@@ -79,7 +79,7 @@ function split_notebook(notebookfile, type::String)
     for (i, cell) in enumerate(nb.cells)
         tag = parse_split_tag(cell.code)
         if isnothing(tag)
-            if was_statement
+            if strict_errors && was_statement
                 error("Expected statement or solution cell to follow statement cell $(cell.code).")
             else
                 was_enabled = missing
@@ -94,11 +94,11 @@ function split_notebook(notebookfile, type::String)
         elseif is_statement != was_statement
             was_enabled = !was_enabled
         end
-        check_enabled(was_enabled, cell)
+        strict_errors && check_enabled(was_enabled, cell)
         push!(is_statement ? statements : solutions, i)
         was_statement = is_statement
     end
-    if was_statement
+    if strict_errors && was_statement
         error("Last cell was a statement cell, expected a solution cell afterwards.")
     end
 
