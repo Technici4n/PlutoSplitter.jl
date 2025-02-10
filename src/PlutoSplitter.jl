@@ -67,39 +67,21 @@ Split a notebook file.
 - type: Type of splitting to perform.
         Can be "check" to only perform some sanity checks, "statement" or "solution".
 """
-function split_notebook(notebookfile, type::String; strict_errors=true)
+function split_notebook(notebookfile, type::String)
     @assert type ∈ ["check", "statement", "solution"]
 
     statements = Int[]
     solutions = Int[]
 
     nb = Pluto.load_notebook(notebookfile)
-    was_statement = false
-    was_enabled = missing
+
     for (i, cell) in enumerate(nb.cells)
         tag = parse_split_tag(cell.code)
         if isnothing(tag)
-            if strict_errors && was_statement
-                error("Expected statement or solution cell to follow statement cell $(cell.code).")
-            else
-                was_enabled = missing
-                continue
-            end
+            continue
         end
         check_fold(tag, cell)
-
-        is_statement = tag.kind == "statement"
-        if ismissing(was_enabled)
-            was_enabled = !Pluto.is_disabled(cell)
-        elseif is_statement != was_statement
-            was_enabled = !was_enabled
-        end
-        strict_errors && check_enabled(was_enabled, cell)
-        push!(is_statement ? statements : solutions, i)
-        was_statement = is_statement
-    end
-    if strict_errors && was_statement
-        error("Last cell was a statement cell, expected a solution cell afterwards.")
+        push!((tag.kind == "statement") ? statements : solutions, i)
     end
 
     if type == "check"
