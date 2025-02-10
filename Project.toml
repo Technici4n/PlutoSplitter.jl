@@ -1,7 +1,7 @@
 name = "PlutoSplitter"
 uuid = "26593b87-58e3-4a81-8553-1b48117f317a"
 authors = ["Bruno Ploumhans <13494793+Technici4n@users.noreply.github.com>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -10,7 +10,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Logging = "1.10"
-Pluto = "0.19.47"
+Pluto = "0.19.47,0.20"
 Test = "1.10.0"
 TestItemRunner = "1"
 julia = "1.10"
