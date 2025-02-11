@@ -63,11 +63,14 @@ export split_notebook
 """
 Split a notebook file.
 
-- notebookfile: File to split.
-- type: Type of splitting to perform.
+- `notebookfile`: File to split.
+- `type`: Type of splitting to perform.
         Can be "check" to only perform some sanity checks, "statement" or "solution".
+        
+Keyword arguments:
+- `output_filename`, Optional: The filename to save the processed notebook at, by default `type` is appended to the original filename. `output_filename` can also be a function with two arguments, which will be passed `notebookfile` and `type` and should return the new filename as a String.
 """
-function split_notebook(notebookfile, type::String)
+function split_notebook(notebookfile, type::String; output_filename::Union{String, Function, Nothing}=nothing)
     @assert type ∈ ["check", "statement", "solution"]
 
     statements = Int[]
@@ -101,11 +104,16 @@ function split_notebook(notebookfile, type::String)
         delete_cell_at(nb, i)
     end
 
-    basename, ext = splitext(notebookfile)
-    splitnotebookfile = "$(basename)_$type$ext"
-    Pluto.save_notebook(nb, splitnotebookfile)
+    if isnothing(output_filename)
+        basename, ext = splitext(notebookfile)
+        output_filename = "$(basename)_$type$ext"
+    elseif output_filename isa Function
+        output_filename = output_filename(notebookfile, type)
+    end
 
-    @info "Successfully split notebook to $(splitnotebookfile)."
+    Pluto.save_notebook(nb, output_filename)
+
+    @info "Successfully split notebook to $(output_filename)."
 end
 
 end # module PlutoSplitter
