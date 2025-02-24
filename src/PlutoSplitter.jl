@@ -87,8 +87,9 @@ function split_notebook(notebookfile, type::String; output_filename::Union{Strin
         push!((tag.kind == "statement") ? statements : solutions, i)
     end
 
+    @info "Notebook $(notebookfile) is a valid splittable notebooks. Statements: $(length(statements)). Solutions: $(length(solutions))."
+
     if type == "check"
-        @info "Notebook $(notebookfile) is a valid splittable notebooks. Statements: $(length(statements)). Solutions: $(length(solutions))."
         return
     end
 
