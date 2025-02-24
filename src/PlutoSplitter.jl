@@ -76,7 +76,7 @@ function split_notebook(notebookfile, type::String; output_filename::Union{Strin
     statements = Int[]
     solutions = Int[]
 
-    nb = Pluto.load_notebook(notebookfile)
+    nb = Pluto.load_notebook(notebookfile; disable_writing_notebook_files=true)
 
     for (i, cell) in enumerate(nb.cells)
         tag = parse_split_tag(cell.code)
