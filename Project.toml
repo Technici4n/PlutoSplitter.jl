@@ -1,7 +1,7 @@
 name = "PlutoSplitter"
 uuid = "26593b87-58e3-4a81-8553-1b48117f317a"
 authors = ["Bruno Ploumhans <13494793+Technici4n@users.noreply.github.com>"]
-version = "0.2.2"
+version = "0.2.3"
 
 [deps]
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
