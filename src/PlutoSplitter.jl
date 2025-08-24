@@ -77,6 +77,8 @@ function split_notebook(notebookfile, type::String; output_filename::Union{Strin
     solutions = Int[]
 
     nb = Pluto.load_notebook(notebookfile; disable_writing_notebook_files=true)
+    🍭 = Pluto.ServerSession()
+    🍭.options.evaluation.workspace_use_distributed = false
 
     for (i, cell) in enumerate(nb.cells)
         tag = parse_split_tag(cell.code)
@@ -104,6 +106,8 @@ function split_notebook(notebookfile, type::String; output_filename::Union{Strin
     for i in reverse(to_remove)
         delete_cell_at(nb, i)
     end
+
+    Pluto.update_run!(🍭, nb, nb.cells)
 
     if isnothing(output_filename)
         basename, ext = splitext(notebookfile)
