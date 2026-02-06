@@ -69,16 +69,19 @@ Split a notebook file.
         
 Keyword arguments:
 - `output_filename`, Optional: The filename to save the processed notebook at, by default `type` is appended to the original filename. `output_filename` can also be a function with two arguments, which will be passed `notebookfile` and `type` and should return the new filename as a String.
+- `update_run`, Optional: Whether to update and run the notebook. Defaults to `true` such that the resulting notebook is runnable as a script. Can be set to `false` to vastly speed up the splitting.
 """
-function split_notebook(notebookfile, type::String; output_filename::Union{String, Function, Nothing}=nothing)
+function split_notebook(notebookfile, type::String; output_filename::Union{String, Function, Nothing}=nothing, update_run::Bool=true)
     @assert type ∈ ["check", "statement", "solution"]
 
     statements = Int[]
     solutions = Int[]
 
     nb = Pluto.load_notebook(notebookfile; disable_writing_notebook_files=true)
-    🍭 = Pluto.ServerSession()
-    🍭.options.evaluation.workspace_use_distributed = false
+    if update_run
+        🍭 = Pluto.ServerSession()
+        🍭.options.evaluation.workspace_use_distributed = false
+    end
 
     for (i, cell) in enumerate(nb.cells)
         tag = parse_split_tag(cell.code)
@@ -107,7 +110,9 @@ function split_notebook(notebookfile, type::String; output_filename::Union{Strin
         delete_cell_at(nb, i)
     end
 
-    Pluto.update_run!(🍭, nb, nb.cells)
+    if update_run
+        Pluto.update_run!(🍭, nb, nb.cells)
+    end
 
     if isnothing(output_filename)
         basename, ext = splitext(notebookfile)
