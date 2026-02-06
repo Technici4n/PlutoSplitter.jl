@@ -25,8 +25,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {version: '1.10', description: 'stable 1.10' }
-          - {version: '1.11', description: 'stable 1.11' }
+          - {version: '1.10', description: 'stable 1.10 (LTS)' }
+          - {version: '1', description: 'stable latest' }
           - {version: 'pre',  description: 'pre-release'}
     steps:
       - uses: actions/checkout@v6
